@@ -8,6 +8,41 @@
         "/Users/raghavmehta/Documents/job-outreach-system"
       ]
     },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_TOKEN_HERE"
+      }
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "playwright-mcp"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://user:password@localhost:5432/job_outreach"
+      ],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://user:password@localhost:5432/job_outreach"
+      }
+    },
     "brave-search": {
       "command": "npx",
       "args": [
@@ -17,15 +52,6 @@
       "env": {
         "BRAVE_API_KEY": "YOUR_BRAVE_API_KEY_HERE"
       }
-    },
-    "context-7": {
-      "command": "echo",
-      "args": ["Placeholder for Context 7 - Please configure with correct executable"]
-    },
-    "arcanos": {
-      "command": "echo",
-      "args": ["Placeholder for ArcanOS - Please configure with correct executable"]
     }
   }
 }
-
