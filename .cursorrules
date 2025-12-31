@@ -1,0 +1,31 @@
+# B-MAD Project Rules
+
+## Core Principles
+1. **Reference Documentation**: Always reference PRD and Architecture documents before implementing any feature.
+2. **Story Format**: Follow the story format from B-MAD for all code changes and commits.
+3. **Type Safety**: strict mode is enabled. No `any` types unless absolutely necessary and documented.
+4. **Testing**: Include unit tests for all features.
+
+## Project Overview
+This is a Job Outreach System that helps users eliminate repetitive tasks in job searching.
+
+## Tech Stack
+- Frontend: Next.js 14+ (App Router), TypeScript, Tailwind CSS
+- Backend: Express (Node.js) with TypeScript
+- Database: Supabase
+
+## MCP Servers
+- File System
+- Brave Search
+- Context 7
+- ArcanOS
+
+## Coding Standards
+- Use functional components with Hooks.
+- Use `zod` for validation.
+- Use `axios` or `fetch` for API calls.
+- Use `react-query` for data fetching.
+
+## Git Workflow
+- Commits should follow conventional commits.
+- Branch names should be descriptive (e.g., `feature/job-search`).

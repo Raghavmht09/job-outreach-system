@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/raghavmehta/Documents/job-outreach-system"
+      ]
+    },
+    "brave-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-brave-search"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "YOUR_BRAVE_API_KEY_HERE"
+      }
+    },
+    "context-7": {
+      "command": "echo",
+      "args": ["Placeholder for Context 7 - Please configure with correct executable"]
+    },
+    "arcanos": {
+      "command": "echo",
+      "args": ["Placeholder for ArcanOS - Please configure with correct executable"]
+    }
+  }
+}
+
