@@ -1,49 +1,62 @@
 
-## User Journey
+## Implementation Strategy: People Data (Referral Finder)
 
-### Phase 1: Resume Optimizer (Weeks 1-2)
+### Approved Architecture
+*   **Primary Source:** Google Custom Search JSON API (X-Ray Search)
+    *   *Query Pattern:* `site:linkedin.com/in/ "Company Name" AND ("Recruiter" OR "Talent Acquisition" OR "Hiring Manager")`
+    *   *Quota:* 100 free queries/day (Hard cap).
+*   **Secondary Source:** Apollo.io API (Free Tier)
+    *   *Quota:* 10,000 credits/month (Soft cap).
+*   **Forbidden:** Direct LinkedIn Scraping (Dummy Accounts).
 
-**Goal:** Transform a generic resume into a highly competitive, ATS-optimized PDF in <1 minute.
+### Critical Failure Mitigations
 
-1.  **Job Input**
-    *   User navigates to Dashboard.
-    *   User pastes URL from LinkedIn/Indeed/Wellfound.
-    *   **System Action:** Scrapes JD content (Title, Skills, Requirements, Company).
+1.  **Quota Exhaustion (Google API)**
+    *   **Strategy:** Cache-First Architecture.
+    *   **Implementation:** Store results in Supabase `linkedin_search_cache` table (Company + Role Key).
+    *   **TTL:** 7 Days (Hiring staff doesn't rotate weekly).
+    *   **Fallback:** If quota hit + cache miss → Show "Daily limit reached. Try manual search."
 
-2.  **Analysis & Strategy**
-    *   System compares Master Resume vs. JD.
-    *   **Output:** "Match Score" (e.g., 45%) + "Gap Analysis" (Missing skills: React, TypeScript).
+2.  **Irrelevant Results (Data Quality)**
+    *   **Strategy:** Post-Processing Filter.
+    *   **Implementation:** Regex check on snippet text. Must contain exact "Company Name" AND ("Recruiter" OR "HR" OR "Talent").
+    *   **UI:** Show "Confidence Score" (High/Medium) based on keyword density.
 
-3.  **Optimization Loop**
-    *   User clicks "Optimize".
-    *   **System Action:** Claude rewrites Summary and Bullet Points to naturally include missing keywords.
-    *   **Output:** New "Match Score" (e.g., 85%) + Diff View (Old vs. New).
+3.  **Dead Links (404s)**
+    *   **Strategy:** Lazy Validation.
+    *   **Implementation:** When user clicks "Profile", perform HEAD request. If 404, flag in DB and hide from future results.
 
-4.  **Finalize**
-    *   User reviews changes (accepts/rejects optional).
-    *   User clicks "Download PDF".
-    *   **System Action:** Generates clean, ATS-parsed PDF.
+4.  **Company Name Mismatch**
+    *   **Strategy:** Multi-Source Extraction.
+    *   **Priority:** `og:site_name` > `<meta>` tags > URL Domain.
+    *   **Fallback:** User editable field "Searching for contacts at: [Acme Corp] ✎".
 
-### Phase 2: Contact Discovery & Outreach (Weeks 3-4)
+### Monitoring & Alerts (Internal Admin)
+*   **Daily:** Google API Quota tracking (Alert at 80%).
+*   **Weekly:** Cache Hit Rate (Target >70%).
+*   **Quality:** User "Bad Result" reports count.
 
-**Goal:** Identify a human to contact and generate a personalized message in <2 minutes.
+### Database Schema Additions
 
-1.  **Discovery**
-    *   User clicks "Find Contacts" (on the same Job Result page).
-    *   **System Action:** Searches for "Recruiter", "Hiring Manager", "Peer Role" at [Company].
-    *   **Display:** List of Profiles (Name, Title, Headline).
+```sql
+-- Cache for Google X-Ray results
+CREATE TABLE linkedin_search_cache (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_name TEXT NOT NULL,
+  search_query TEXT NOT NULL,
+  results JSONB NOT NULL, -- Array of {name, title, url, snippet}
+  cached_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days'),
+  UNIQUE(company_name, search_query)
+);
 
-2.  **Selection & Drafting**
-    *   User selects a profile (e.g., "Sarah Jones - Tech Recruiter").
-    *   User selects Tone: "Direct" (for recruiters) or "Casual" (for peers).
-    *   **System Action:** Generates message using [User Resume] + [JD] + [Recipient Profile].
-
-3.  **Handoff (The "Risk-Aware" Flow)**
-    *   User clicks "Copy Message".
-    *   **Default Mode (Safe):** System displays "Search for 'Sarah Jones' at 'Acme Corp' on LinkedIn" with a copy button for the search term.
-    *   **Advanced Mode (Risky):** *If enabled in Settings*, system displays "Open Profile" button linking directly to `linkedin.com/in/sarah-jones`.
-    *   **Action:** User navigates to LinkedIn (via Search or Link), connects, and pastes the message.
-
-### Phase 3: Tracking (Post-MVP)
-
-*Deferred as per Product Scope agreements.*
+-- Track API usage per user
+CREATE TABLE api_usage (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id),
+  service TEXT NOT NULL, -- 'google', 'apollo'
+  date DATE DEFAULT CURRENT_DATE,
+  count INTEGER DEFAULT 0,
+  UNIQUE(user_id, service, date)
+);
+```
